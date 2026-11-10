@@ -1,0 +1,65 @@
+name: Elsevier journal history audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/elsevier-audit.yml'
+      - 'scripts/audit_elsevier.py'
+concurrency:
+  group: elsevier-history-audit
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Test history extraction
+        run: python3 -m unittest discover -s tests -v
+      - name: Configure checkpoint author
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+      - name: Audit all 4859 Elsevier catalog entries
+        run: python3 -u scripts/audit_elsevier.py --push
+      - name: Package the latest saved snapshot
+        if: always()
+        run: |
+          python3 scripts/audit_elsevier.py --package-only
+          mkdir -p _site
+          cp index.html elsevier-audit.html .nojekyll _site/
+          cp -r assets data _site/
+      - name: Preserve audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: elsevier-audit-results
+          path: data/elsevier-audit*
+          retention-days: 30
+      - name: Upload public site snapshot
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+  deploy:
+    if: always() && !cancelled()
+    needs: audit
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish saved audit snapshot
+        id: deployment
+        uses: actions/deploy-pages@v4
