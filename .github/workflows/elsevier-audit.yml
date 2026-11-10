@@ -8,7 +8,7 @@ on:
       - 'scripts/audit_elsevier.py'
 concurrency:
   group: elsevier-history-audit
-  cancel-in-progress: false
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:

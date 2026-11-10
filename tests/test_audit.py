@@ -14,5 +14,8 @@ class TestAudit(unittest.TestCase):
  def test_partial_date(self):self.assertIsNone(m.date(E.fromstring('<date><Year>2026</Year><Month>2</Month></date>')))
  def test_future(self):self.assertIsNone(m.date(E.fromstring('<date><Year>2027</Year><Month>2</Month><Day>2</Day></date>')))
  def test_stats(self):self.assertEqual(m.stats([10,20,90]),{'n':3,'mean':40,'median':20,'min':10,'max':90})
+ def test_duplicate_doi(self):
+  rows=[{'doi':'10.1/ABC','pmid':'1','included':True},{'doi':'10.1/abc','pmid':'2','included':True}]
+  self.assertEqual(sum(x['included'] for x in m.deduplicate(rows)),1)
  def test_url(self):self.assertFalse(m.allowed('https://elsevier.com.evil.test'));self.assertFalse(m.allowed('file:///etc/passwd'))
 if __name__=='__main__':unittest.main()

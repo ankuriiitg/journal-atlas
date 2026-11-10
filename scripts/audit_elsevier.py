@@ -99,6 +99,13 @@ def parse(a,j,record):
   r['acceptedToOnlineDays']=(dt.date.fromisoformat(online)-dt.date.fromisoformat(accepted)).days;r['receivedToOnlineDays']=(dt.date.fromisoformat(online)-dt.date.fromisoformat(received)).days
  elif online:r['onlineDateWarning']='Online date precedes acceptance; excluded from production calculation'
  return r
+def deduplicate(records):
+ seen=set()
+ for r in records:
+  key=(r.get('doi') or r.get('pmid') or '').strip().lower()
+  if key in seen:r.update(included=False,exclusionReason='Duplicate DOI/PMID')
+  elif key:seen.add(key)
+ return records
 def audit(j):
  path=OUT/(j['id']+'.json')
  if path.exists():
@@ -129,6 +136,7 @@ def audit(j):
     years=[int(x['firstPublicationDate'][:4]) for x in items if x.get('firstPublicationDate')]
     if not years:break
     end=f'{min(years)-1}-12-31'
+   deduplicate(r['articles'])
    valid=[a for a in r['articles'] if a['included']]
    if valid:
     year=max(a['publicationYear'] for a in valid);cohort=[a for a in valid if a['publicationYear']==year]
