@@ -22,7 +22,11 @@ const publisherMetrics = {
     "https://www.sciencedirect.com/science/journal/09218890"
   ]
 };
+const additionalImpactFactors={"Neurocomputing": 6.7, "Engineering Applications of Artificial Intelligence": 9.0, "European Journal of Control": 2.6, "Image and Vision Computing": 5.0, "Journal of Systems Architecture": 5.3, "Computers and Electronics in Agriculture": 10.3, "Journal of Parallel and Distributed Computing": 3.4, "Journal of Symbolic Computation": 0.9, "International Journal of Fatigue": 7.0};
 for (const j of catalog) {
+const impactValue = additionalImpactFactors[j.title];
+if (impactValue !== undefined && j.publisher === "Elsevier") j.metrics.impactFactor ??= {value:impactValue,label:"Journal Impact Factor",sourceUrl:"https://www.sciencedirect.com/browse/calls-for-papers",evidenceType:"publisher-reported",notes:"Publisher calls-for-papers listing checked 2026-11-10. Metric year unspecified in listing."};
+
   const official = publisherMetrics[j.id];
   if (official && j.publisher === 'Elsevier') {
     const [impactFactor, firstDecision, sourceUrl] = official;
